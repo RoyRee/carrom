@@ -321,11 +321,11 @@ let state = defaultState();
 
 // ─────────────────────────────────────────────────────────────────
 // SHARED SCOREBOARD SYNC
-// Uses jsonblob.com — a free, anonymous JSON storage service with no
+// Uses jsonstorage.net — a free, anonymous JSON storage service with no
 // signup required — so everyone who opens the same link (with ?room=ID)
 // sees and contributes to the same live results.
 // ─────────────────────────────────────────────────────────────────
-const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
+const BLOB_API = 'https://api.jsonstorage.net/v1/json';
 const POLL_MS  = 5000;
 
 let roomId    = null;
@@ -349,6 +349,10 @@ async function fetchRemoteState(id) {
   return res.json();
 }
 
+function extractIdFromLocation(loc) {
+  return (loc || '').split(/[\/?#]/).filter(Boolean).pop() || '';
+}
+
 async function createRemoteRoom(initial) {
   const res = await fetch(BLOB_API, {
     method: 'POST',
@@ -356,8 +360,16 @@ async function createRemoteRoom(initial) {
     body: JSON.stringify(initial)
   });
   if (!res.ok) throw new Error('could not create room');
-  const loc = res.headers.get('Location') || '';
-  const id = loc.split('/').filter(Boolean).pop();
+  // Some JSON-store APIs return the new resource's id/url in the response
+  // body (readable cross-origin); others only set a Location header, which
+  // browsers hide from cross-origin JS unless the server exposes it via
+  // Access-Control-Expose-Headers. Try the body first, then the header.
+  let id = '';
+  try {
+    const data = await res.json();
+    id = extractIdFromLocation(data && (data.uri || data.url || data.id || data.location));
+  } catch (e) {}
+  if (!id) id = extractIdFromLocation(res.headers.get('Location'));
   if (!id) throw new Error('no room id returned');
   return id;
 }

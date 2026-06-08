@@ -182,6 +182,18 @@
   .finalist-pts{font-size:12px;color:#6b7db3;margin-top:4px;}
   .vs-big{font-family:'Fraunces',serif;font-weight:900;font-size:28px;background:linear-gradient(95deg,var(--blaze),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent;}
   .tbd-card{background:rgba(255,255,255,.05);border:2px dashed rgba(255,255,255,.15);border-radius:14px;padding:18px 24px;min-width:140px;text-align:center;color:rgba(238,243,255,.35);font-style:italic;font-size:15px;}
+
+  /* Share / sync banner */
+  .share-banner{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.3);border-radius:12px;padding:14px 16px;margin-bottom:22px;font-size:13px;color:#c4d2f0;line-height:1.6;}
+  .share-banner strong{color:var(--electric);}
+  .share-banner.share-banner-warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fde68a;}
+  .share-banner.share-banner-warn strong{color:var(--amber);}
+  .share-link-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+  .share-link-input{flex:1;min-width:200px;background:rgba(12,20,48,.6);border:1px solid rgba(34,211,238,.3);color:var(--cream);padding:9px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;}
+  .share-link-input:focus{outline:none;border-color:var(--electric);}
+  .share-copy-btn{background:linear-gradient(135deg,var(--electric),var(--electric-deep));border:none;color:var(--navy);font-weight:800;font-size:12px;padding:9px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;font-family:'Outfit',sans-serif;}
+  .share-copy-btn:hover{filter:brightness(1.1);}
+
   .foot{text-align:center;margin-top:40px;font-size:11px;color:#7e8cc4;letter-spacing:.05em;}
   @keyframes pop{0%{transform:scale(.6);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
   .pop-in{animation:pop .4s ease;}
@@ -199,6 +211,8 @@
       <button class="ctl" id="btnPrint">⎙ Print / Save</button>
     </div>
   </header>
+
+  <div id="shareBanner"></div>
 
   <div class="tabs">
     <button class="tab active" data-tab="roster">👥 Players</button>
@@ -272,34 +286,157 @@ function defaultState() {
     schedule: [],
     // results[dayIdx]: null | { type:'match', team1, team2, winner, pieces, noshows:[] }
     //                         | { type:'bye' }
-    results: []
+    results: [],
+    _v: 1   // monotonic revision counter, used to merge shared updates safely
   };
 }
 
-function loadState() {
+function normalizeState(raw) {
+  const d = defaultState();
+  if (!raw || typeof raw !== 'object') return d;
+  if (raw.players) d.players = raw.players;
+  if (raw.nextId)  d.nextId  = raw.nextId;
+  if (raw.mumbai !== undefined) d.mumbai = raw.mumbai;
+  if (raw.schedule) d.schedule = raw.schedule;
+  if (raw.results)  d.results  = raw.results;
+  d._v = raw._v || 1;
+  return d;
+}
+
+function loadLocalState() {
   try {
     const raw = localStorage.getItem('carrom-blitz-v3');
-    if (raw) {
-      const p = JSON.parse(raw);
-      const d = defaultState();
-      if (p.players) d.players = p.players;
-      if (p.nextId)  d.nextId  = p.nextId;
-      if (p.mumbai !== undefined) d.mumbai = p.mumbai;
-      if (p.schedule) d.schedule = p.schedule;
-      if (p.results)  d.results  = p.results;
-      return d;
-    }
+    if (raw) return normalizeState(JSON.parse(raw));
   } catch(e){}
   return defaultState();
 }
 
 function saveState() {
+  state._v = (state._v || 0) + 1;
   try { localStorage.setItem('carrom-blitz-v3', JSON.stringify(state)); } catch(e){}
+  scheduleRemotePush();
 }
 
-let state = loadState();
-// Ensure schedule exists on first load
-if (!state.schedule || state.schedule.length === 0) rebuildSchedule();
+let state = defaultState();
+
+// ─────────────────────────────────────────────────────────────────
+// SHARED SCOREBOARD SYNC
+// Uses jsonblob.com — a free, anonymous JSON storage service with no
+// signup required — so everyone who opens the same link (with ?room=ID)
+// sees and contributes to the same live results.
+// ─────────────────────────────────────────────────────────────────
+const BLOB_API = 'https://jsonblob.com/api/jsonBlob';
+const POLL_MS  = 5000;
+
+let roomId    = null;
+let syncMode  = 'local';   // 'local' (no sharing) | 'shared' (synced) | 'error' (couldn't reach service)
+let pushTimer = null;
+let polling   = false;
+
+function getRoomFromURL() {
+  return new URLSearchParams(window.location.search).get('room');
+}
+
+function setRoomInURL(id) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('room', id);
+  window.history.replaceState({}, '', url);
+}
+
+async function fetchRemoteState(id) {
+  const res = await fetch(`${BLOB_API}/${id}`, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('room not found');
+  return res.json();
+}
+
+async function createRemoteRoom(initial) {
+  const res = await fetch(BLOB_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(initial)
+  });
+  if (!res.ok) throw new Error('could not create room');
+  const loc = res.headers.get('Location') || '';
+  const id = loc.split('/').filter(Boolean).pop();
+  if (!id) throw new Error('no room id returned');
+  return id;
+}
+
+async function pushRemoteState() {
+  if (syncMode !== 'shared' || !roomId) return;
+  try {
+    await fetch(`${BLOB_API}/${roomId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(state)
+    });
+  } catch (e) { /* offline — next save will retry */ }
+}
+
+function scheduleRemotePush() {
+  if (syncMode !== 'shared') return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushRemoteState, 700);
+}
+
+function isEditingForm() {
+  const el = document.activeElement;
+  return !!(el && ['INPUT','SELECT','TEXTAREA'].includes(el.tagName));
+}
+
+function startPolling() {
+  if (polling) return;
+  polling = true;
+  setInterval(async () => {
+    if (syncMode !== 'shared' || isEditingForm()) return;
+    try {
+      const remote = await fetchRemoteState(roomId);
+      if ((remote._v || 0) > (state._v || 0)) {
+        state = normalizeState(remote);
+        renderRoster();
+        renderSchedule();
+        renderLeaderboard();
+        renderFinale();
+        updateHeader();
+      }
+    } catch (e) { /* transient network errors are fine, retry next tick */ }
+  }, POLL_MS);
+}
+
+function renderShareBanner() {
+  const el = document.getElementById('shareBanner');
+  if (!el) return;
+  if (syncMode === 'shared') {
+    const link = window.location.href;
+    el.innerHTML = `<div class="share-banner">
+      🔗 <strong>Shared scoreboard is live.</strong> Send this link to everyone — they'll all see (and can enter) the same results in real time:
+      <div class="share-link-row">
+        <input type="text" readonly class="share-link-input" id="shareLinkInput" value="${esc(link)}">
+        <button class="share-copy-btn" id="shareCopyBtn">Copy Link</button>
+      </div>
+    </div>`;
+    const copyBtn = document.getElementById('shareCopyBtn');
+    copyBtn.addEventListener('click', () => {
+      const inp = document.getElementById('shareLinkInput');
+      inp.select();
+      const done = () => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(inp.value).then(done).catch(() => { try { document.execCommand('copy'); done(); } catch(e){} });
+      } else {
+        try { document.execCommand('copy'); done(); } catch(e){}
+      }
+    });
+  } else if (syncMode === 'error') {
+    el.innerHTML = `<div class="share-banner share-banner-warn">
+      ⚠️ <strong>Could not reach the shared scoreboard service</strong> — running in local-only mode. Results will only be visible on this device. Check your connection and reload to retry sharing.
+    </div>`;
+  } else {
+    el.innerHTML = '';
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────
 // HELPERS
@@ -914,11 +1051,49 @@ document.getElementById('btnPrint').addEventListener('click', () => window.print
 
 // ─────────────────────────────────────────────────────────────────
 // INIT
+// If the URL has ?room=ID, join that shared scoreboard. Otherwise,
+// create a brand-new shared room and put its ID in the URL so the
+// first person to open the page can copy the link and share it.
+// Falls back to local-only mode if the sync service is unreachable.
 // ─────────────────────────────────────────────────────────────────
-renderRoster();
-initMumbai();
-renderSchedule();
-updateHeader();
+async function init() {
+  roomId = getRoomFromURL();
+
+  if (roomId) {
+    try {
+      const remote = await fetchRemoteState(roomId);
+      state = normalizeState(remote);
+      if (!state.schedule || state.schedule.length === 0) rebuildSchedule();
+      syncMode = 'shared';
+    } catch (e) {
+      roomId = null; // couldn't join — fall through to create a fresh room
+    }
+  }
+
+  if (!roomId) {
+    state = defaultState();
+    rebuildSchedule();
+    try {
+      roomId = await createRemoteRoom(state);
+      setRoomInURL(roomId);
+      syncMode = 'shared';
+    } catch (e) {
+      roomId = null;
+      syncMode = 'error';
+      state = loadLocalState();
+      if (!state.schedule || state.schedule.length === 0) rebuildSchedule();
+    }
+  }
+
+  renderRoster();
+  initMumbai();
+  renderSchedule();
+  updateHeader();
+  renderShareBanner();
+  if (syncMode === 'shared') startPolling();
+}
+
+init();
 </script>
 </body>
 </html>

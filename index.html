@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pune vs Mumbai · Carrom Blitz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,800;9..144,900&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#070b22;--navy-2:#0e1740;--court:#1b2c7a;
+    --electric:#22d3ee;--electric-deep:#0891b2;
+    --blaze:#ff6a2c;--blaze-deep:#d9461a;
+    --magenta:#ff2d78;--gold:#ffd23f;
+    --cream:#eef3ff;--card:#f3f7ff;--card-2:#dde7fb;--ink:#0c1430;
+    --green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    font-family:'Outfit',sans-serif;color:var(--cream);
+    background:
+      radial-gradient(110% 80% at 15% -10%,rgba(34,211,238,.22) 0%,transparent 45%),
+      radial-gradient(120% 90% at 88% 0%,rgba(255,45,120,.20) 0%,transparent 42%),
+      radial-gradient(130% 100% at 50% 110%,var(--court) 0%,var(--navy-2) 50%,var(--navy) 100%);
+    min-height:100vh;padding:24px 14px 80px;position:relative;overflow-x:hidden;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay;
+  }
+  .stage{max-width:900px;margin:0 auto;position:relative;z-index:1;}
+
+  /* Header */
+  header{text-align:center;margin-bottom:32px;}
+  .eyebrow{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--electric);font-weight:700;margin-bottom:10px;}
+  h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(30px,8vw,62px);line-height:.95;color:var(--cream);letter-spacing:-.01em;text-shadow:0 2px 18px rgba(34,211,238,.25);}
+  h1 .vs{background:linear-gradient(95deg,var(--blaze),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .coins{display:flex;gap:8px;justify-content:center;margin-top:16px;}
+  .coin{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 2px 3px rgba(255,255,255,.35),0 2px 8px rgba(0,0,0,.45);}
+  .coin.w{background:radial-gradient(circle at 35% 30%,#fff,#cdd9f5);}
+  .coin.b{background:radial-gradient(circle at 35% 30%,#3b4570,#0c1430);}
+  .coin.r{background:radial-gradient(circle at 35% 30%,#ff9e63,var(--blaze-deep));box-shadow:inset 0 2px 3px rgba(255,255,255,.4),0 0 12px rgba(255,106,44,.6);}
+  .controls{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap;}
+  button.ctl{font-family:'Outfit',sans-serif;font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--cream);cursor:pointer;background:rgba(255,255,255,.06);border:1px solid rgba(34,211,238,.4);padding:10px 18px;border-radius:40px;transition:.18s;}
+  button.ctl:hover{background:rgba(34,211,238,.16);border-color:var(--electric);box-shadow:0 0 16px rgba(34,211,238,.25);}
+  button.ctl:active{transform:translateY(1px);}
+  button.ctl.danger:hover{background:rgba(255,45,120,.16);border-color:var(--magenta);box-shadow:0 0 16px rgba(255,45,120,.25);}
+
+  /* Tabs */
+  .tabs{display:flex;gap:6px;margin-bottom:26px;background:rgba(255,255,255,.04);border:1px solid rgba(34,211,238,.15);border-radius:50px;padding:5px;}
+  .tab{flex:1;text-align:center;padding:10px 8px;border-radius:40px;cursor:pointer;font-weight:700;font-size:13px;letter-spacing:.04em;transition:.18s;color:rgba(238,243,255,.5);border:none;background:none;font-family:'Outfit',sans-serif;}
+  .tab.active{background:linear-gradient(135deg,var(--electric-deep),var(--court));color:var(--cream);box-shadow:0 4px 14px rgba(34,211,238,.25);}
+  .section{display:none;} .section.active{display:block;}
+
+  /* Card */
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.18));border:1px solid rgba(34,211,238,.22);border-radius:18px;padding:22px 20px;margin-bottom:22px;position:relative;}
+  .card::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:18px 18px 0 0;background:linear-gradient(90deg,var(--electric),var(--magenta));opacity:.8;}
+  .card-title{font-family:'Fraunces',serif;font-weight:800;font-size:19px;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .card-title::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(255,210,63,.4),transparent);}
+
+  /* Info note */
+  .info-note{background:rgba(34,211,238,.08);border-left:3px solid var(--electric);padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.6;color:#c4d2f0;margin-bottom:18px;}
+  .info-note strong{color:var(--electric);}
+  .warn-note{background:rgba(245,158,11,.08);border-left:3px solid var(--amber);padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55;color:#fde68a;margin-bottom:14px;}
+
+  /* Player roster */
+  .player-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:600px){.player-grid{grid-template-columns:1fr;}}
+  .player-row-wrap{display:flex;align-items:center;gap:8px;}
+  .p-badge{width:36px;height:36px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--navy);background:linear-gradient(135deg,var(--electric),var(--electric-deep));box-shadow:0 2px 8px rgba(34,211,238,.3);flex-shrink:0;}
+  .p-badge.absent-badge{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 2px 8px rgba(239,68,68,.3);}
+  .player-input{flex:1;background:rgba(12,20,48,.5);border:1px solid rgba(34,211,238,.25);color:var(--cream);padding:10px 14px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:15px;font-weight:500;transition:.2s;min-width:0;}
+  .player-input:focus{outline:none;border-color:var(--electric);background:rgba(12,20,48,.9);box-shadow:0 0 10px rgba(34,211,238,.3);}
+  .player-input.dup-input{border-color:var(--magenta);box-shadow:0 0 8px rgba(255,45,120,.3);}
+  .dup-tag{font-size:10px;font-weight:800;color:var(--navy);background:var(--magenta);padding:3px 7px;border-radius:10px;flex:none;display:none;}
+  .dup-tag.show{display:inline-block;}
+  .remove-player-btn{width:30px;height:30px;border-radius:8px;cursor:pointer;background:rgba(255,45,120,.12);border:1px solid rgba(255,45,120,.35);color:var(--magenta);font-size:18px;line-height:1;font-weight:700;transition:.15s;flex:none;}
+  .remove-player-btn:hover{background:rgba(255,45,120,.25);}
+  .add-player-btn{margin-top:12px;width:100%;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--electric);background:rgba(34,211,238,.08);border:1px dashed rgba(34,211,238,.5);border-radius:10px;padding:11px;transition:.15s;}
+  .add-player-btn:hover{background:rgba(34,211,238,.18);border-style:solid;}
+  .mumbai-row{display:flex;align-items:center;gap:10px;margin-top:4px;}
+  .mumbai-badge{width:36px;height:36px;flex:none;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:linear-gradient(135deg,var(--blaze),var(--magenta));box-shadow:0 2px 8px rgba(255,106,44,.3);}
+
+  /* Schedule regeneration warning */
+  .regen-bar{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .regen-bar span{font-size:13px;color:#fde68a;}
+  .regen-btn{font-family:'Outfit',sans-serif;font-weight:700;font-size:12px;color:var(--navy);background:var(--amber);border:none;border-radius:8px;padding:7px 14px;cursor:pointer;transition:.15s;}
+  .regen-btn:hover{filter:brightness(1.1);}
+
+  /* Day card */
+  .day-card{background:rgba(12,20,48,.4);border:1px solid rgba(34,211,238,.18);border-radius:14px;padding:18px 16px;margin-bottom:14px;}
+  .day-card.bye-card{border-color:rgba(255,210,63,.25);background:rgba(255,210,63,.04);}
+  .day-card.noshow-card{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.04);}
+  .day-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .day-num{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:900;font-size:18px;color:var(--navy);background:linear-gradient(135deg,var(--gold),var(--blaze));box-shadow:0 3px 10px rgba(255,210,63,.3);}
+  .day-name{font-weight:800;font-size:16px;color:var(--cream);}
+  .day-players{font-size:13px;color:#a9b8e8;margin-top:2px;}
+  .day-status{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:20px;}
+  .day-status.pending{background:rgba(255,255,255,.07);color:#a9b8e8;}
+  .day-status.done{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+  .day-status.bye{background:rgba(255,210,63,.15);color:var(--gold);border:1px solid rgba(255,210,63,.3);}
+  .day-status.noshow{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+
+  /* Bye / No-show info boxes */
+  .bye-info{background:rgba(255,210,63,.08);border:1px solid rgba(255,210,63,.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#fde68a;line-height:1.55;}
+  .bye-info b{color:var(--gold);}
+  .noshow-info{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#fca5a5;line-height:1.55;}
+  .noshow-info b{color:var(--red);}
+
+  /* Match form */
+  .match-form{display:flex;flex-direction:column;gap:12px;}
+  .form-section-label{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--electric);font-weight:700;margin-bottom:4px;}
+
+  /* No-show selector */
+  .noshow-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .noshow-check-wrap{display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .noshow-check{width:16px;height:16px;accent-color:var(--red);cursor:pointer;}
+  .noshow-check-label{font-size:13px;color:#fca5a5;font-weight:600;}
+
+  /* Teams */
+  .teams-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;}
+  .team-box{background:rgba(12,20,48,.5);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 10px;text-align:center;}
+  .team-box.winner-team{background:linear-gradient(180deg,rgba(255,106,44,.15),rgba(255,45,120,.08));border-color:var(--blaze);box-shadow:0 0 18px rgba(255,106,44,.2);}
+  .team-label{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#a9b8e8;font-weight:700;margin-bottom:8px;}
+  .team-players-sel{display:flex;flex-direction:column;gap:6px;}
+  .player-sel{background:rgba(12,20,48,.7);border:1px solid rgba(34,211,238,.25);color:var(--cream);padding:8px 10px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;width:100%;cursor:pointer;}
+  .player-sel:focus{outline:none;border-color:var(--electric);}
+  .vs-divider{font-family:'Fraunces',serif;font-weight:900;font-size:15px;color:var(--electric);text-align:center;letter-spacing:.1em;}
+  .result-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .result-label{font-size:13px;font-weight:600;color:#a9b8e8;white-space:nowrap;}
+  .winner-sel{flex:1;min-width:120px;background:rgba(12,20,48,.7);border:1px solid rgba(34,211,238,.25);color:var(--cream);padding:9px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+  .winner-sel:focus{outline:none;border-color:var(--electric);}
+  .pieces-input{width:80px;background:rgba(12,20,48,.7);border:1px solid rgba(255,210,63,.3);color:var(--gold);padding:9px 12px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;text-align:center;}
+  .pieces-input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 8px rgba(255,210,63,.2);}
+  .save-btn{width:100%;padding:13px;border-radius:10px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:800;font-size:15px;letter-spacing:.04em;color:var(--navy);background:linear-gradient(135deg,var(--electric),var(--electric-deep));border:none;transition:.18s;box-shadow:0 4px 16px rgba(34,211,238,.3);}
+  .save-btn:hover{filter:brightness(1.1);}
+  .save-btn:active{transform:translateY(1px);}
+
+  /* Result display */
+  .result-display{background:linear-gradient(135deg,rgba(255,106,44,.12),rgba(255,45,120,.08));border:1px solid rgba(255,106,44,.3);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .result-teams{flex:1;min-width:180px;}
+  .result-winner{font-weight:800;font-size:15px;color:var(--blaze);}
+  .result-detail{font-size:13px;color:#a9b8e8;margin-top:3px;}
+  .edit-result-btn{background:rgba(255,255,255,.06);border:1px solid rgba(34,211,238,.3);color:var(--electric);padding:7px 14px;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+  .edit-result-btn:hover{background:rgba(34,211,238,.15);}
+
+  /* Leaderboard */
+  .lb-table{width:100%;border-collapse:collapse;}
+  .lb-table th{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--electric);font-weight:700;padding:8px 12px;border-bottom:1px solid rgba(34,211,238,.2);text-align:left;}
+  .lb-table th:not(:first-child){text-align:center;}
+  .lb-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px;font-weight:500;vertical-align:middle;}
+  .lb-table td:not(:first-child){text-align:center;}
+  .lb-table tr:last-child td{border-bottom:none;}
+  .rank-1 td{background:rgba(255,210,63,.06);}
+  .rank-1 .rank-badge{background:linear-gradient(135deg,var(--gold),var(--blaze));color:var(--navy);}
+  .rank-badge{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:rgba(255,255,255,.08);color:#a9b8e8;}
+  .player-cell{display:flex;align-items:center;gap:10px;}
+  .pid-tag{font-size:11px;font-weight:800;color:var(--navy);background:linear-gradient(135deg,var(--electric),var(--electric-deep));padding:3px 7px;border-radius:6px;}
+  .pid-tag.absent-tag{background:linear-gradient(135deg,#ef4444,#b91c1c);}
+  .pts-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-weight:800;font-size:14px;}
+  .pts-high{background:rgba(34,197,94,.18);color:var(--green);}
+  .pts-mid{background:rgba(255,210,63,.14);color:var(--gold);}
+  .pts-low{background:rgba(255,255,255,.06);color:#a9b8e8;}
+  .absent-row td{opacity:.55;}
+  .bye-pill{font-size:10px;font-weight:700;color:var(--navy);background:var(--gold);padding:2px 7px;border-radius:10px;margin-left:4px;}
+  .noshow-pill{font-size:10px;font-weight:700;color:#fff;background:var(--red);padding:2px 7px;border-radius:10px;margin-left:4px;}
+
+  /* Grand Finale */
+  .finale-box{text-align:center;padding:32px 20px;background:linear-gradient(180deg,rgba(255,210,63,.07),rgba(255,106,44,.05));border:2px solid rgba(255,210,63,.4);border-radius:20px;box-shadow:0 0 40px rgba(255,210,63,.1);}
+  .trophy-big{font-size:52px;margin-bottom:12px;filter:drop-shadow(0 4px 18px rgba(255,210,63,.5));}
+  .finale-title{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(22px,5vw,36px);color:var(--gold);margin-bottom:6px;}
+  .finale-sub{font-size:14px;color:#a9b8e8;margin-bottom:24px;}
+  .matchup{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:20px;}
+  .finalist-card{background:linear-gradient(180deg,var(--card),var(--card-2));border-radius:14px;padding:18px 24px;min-width:140px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.35);}
+  .finalist-city{font-size:11px;letter-spacing:.25em;text-transform:uppercase;font-weight:700;margin-bottom:6px;}
+  .finalist-city.pune{color:var(--electric);}
+  .finalist-city.mumbai{color:var(--magenta);}
+  .finalist-name{font-family:'Fraunces',serif;font-weight:800;font-size:clamp(17px,4vw,24px);color:var(--ink);line-height:1.1;}
+  .finalist-pts{font-size:12px;color:#6b7db3;margin-top:4px;}
+  .vs-big{font-family:'Fraunces',serif;font-weight:900;font-size:28px;background:linear-gradient(95deg,var(--blaze),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tbd-card{background:rgba(255,255,255,.05);border:2px dashed rgba(255,255,255,.15);border-radius:14px;padding:18px 24px;min-width:140px;text-align:center;color:rgba(238,243,255,.35);font-style:italic;font-size:15px;}
+  .foot{text-align:center;margin-top:40px;font-size:11px;color:#7e8cc4;letter-spacing:.05em;}
+  @keyframes pop{0%{transform:scale(.6);opacity:0;}60%{transform:scale(1.1);}100%{transform:scale(1);opacity:1;}}
+  .pop-in{animation:pop .4s ease;}
+</style>
+</head>
+<body>
+<div class="stage">
+  <header>
+    <div class="eyebrow" id="headerEyebrow">2v2 Doubles · Carrom Blitz</div>
+    <h1>Pune <span class="vs">vs</span> Mumbai</h1>
+    <div style="font-family:'Fraunces',serif;font-size:clamp(13px,3vw,18px);color:#a9b8e8;margin-top:6px;letter-spacing:.05em;">The Unofficial Carrom Blitz 🎯</div>
+    <div class="coins"><span class="coin w"></span><span class="coin b"></span><span class="coin r"></span><span class="coin b"></span><span class="coin w"></span></div>
+    <div class="controls">
+      <button class="ctl danger" id="btnReset">↺ Reset Results</button>
+      <button class="ctl" id="btnPrint">⎙ Print / Save</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="roster">👥 Players</button>
+    <button class="tab" data-tab="schedule">📅 Schedule</button>
+    <button class="tab" data-tab="leaderboard">🏅 Standings</button>
+    <button class="tab" data-tab="finale">🏆 Grand Final</button>
+  </div>
+
+  <!-- TAB: Roster -->
+  <div class="section active" id="tab-roster">
+    <div class="card">
+      <div class="card-title">Pune Players</div>
+      <div class="info-note">
+        <strong>Add, remove, or rename players freely.</strong> The schedule auto-recalculates to ensure everyone plays exactly twice. Minimum 4 players needed (one match per round). Player count must be even — odd counts get a bye slot automatically.
+      </div>
+      <div id="dupWarning" style="display:none;" class="warn-note">⚠️ Duplicate names detected — please make all names unique.</div>
+      <div class="player-grid" id="playerGrid"></div>
+      <button class="add-player-btn" id="addPlayerBtn">+ Add Player</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Mumbai Champion</div>
+      <div class="info-note"><strong>The visiting challenger.</strong> The top Pune player faces this person in the Grand Finale.</div>
+      <div class="mumbai-row">
+        <div class="mumbai-badge">✈️</div>
+        <input type="text" class="player-input" id="mumbaiInput" placeholder="Mumbai champion's name" maxlength="28">
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: Schedule -->
+  <div class="section" id="tab-schedule">
+    <div class="info-note">
+      <strong>Daily format:</strong> Players are called in groups of 4. After the coin flip, set who partnered with whom, then record the result. <strong>Win = 1 pt · Tiebreaker = pieces left on board when you win.</strong>
+    </div>
+    <div id="scheduleContainer"></div>
+  </div>
+
+  <!-- TAB: Leaderboard -->
+  <div class="section" id="tab-leaderboard">
+    <div class="card">
+      <div class="card-title">Pune Standings</div>
+      <div id="leaderboardContent"></div>
+    </div>
+  </div>
+
+  <!-- TAB: Grand Finale -->
+  <div class="section" id="tab-finale">
+    <div class="finale-box" id="finaleBox"></div>
+  </div>
+
+  <div class="foot" id="footNote">Pune Office Carrom Blitz · Top scorer faces Mumbai</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────
+const DAY_LABELS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+function defaultState() {
+  return {
+    // players: array of { id, name }
+    players: [
+      {id:1,name:''},{id:2,name:''},{id:3,name:''},{id:4,name:''},
+      {id:5,name:''},{id:6,name:''},{id:7,name:''},{id:8,name:''},
+      {id:9,name:''},{id:10,name:''}
+    ],
+    nextId: 11,
+    mumbai: '',
+    // schedule: array of { type:'match'|'bye', players:[ids] }  — auto-generated
+    schedule: [],
+    // results[dayIdx]: null | { type:'match', team1, team2, winner, pieces, noshows:[] }
+    //                         | { type:'bye' }
+    results: []
+  };
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('carrom-blitz-v3');
+    if (raw) {
+      const p = JSON.parse(raw);
+      const d = defaultState();
+      if (p.players) d.players = p.players;
+      if (p.nextId)  d.nextId  = p.nextId;
+      if (p.mumbai !== undefined) d.mumbai = p.mumbai;
+      if (p.schedule) d.schedule = p.schedule;
+      if (p.results)  d.results  = p.results;
+      return d;
+    }
+  } catch(e){}
+  return defaultState();
+}
+
+function saveState() {
+  try { localStorage.setItem('carrom-blitz-v3', JSON.stringify(state)); } catch(e){}
+}
+
+let state = loadState();
+// Ensure schedule exists on first load
+if (!state.schedule || state.schedule.length === 0) rebuildSchedule();
+
+// ─────────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function pname(id) {
+  const p = state.players.find(p => p.id === id);
+  if (!p) return `P${id}`;
+  return (p.name||'').trim() || `P${id}`;
+}
+
+function playerIds() { return state.players.map(p => p.id); }
+
+function hasDuplicateNames() {
+  const names = state.players.map(p => (p.name||'').trim().toLowerCase()).filter(n => n !== '');
+  return new Set(names).size !== names.length;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// SCHEDULE GENERATION
+// Algorithm: distribute N players into rounds of 4, each player plays exactly twice.
+// If N is odd, one slot per round is a BYE (that player sits out that round but still
+// appears in another real round).
+// Strategy: create a round-robin style pairing using a circle method reduced to groups of 4.
+// ─────────────────────────────────────────────────────────────────
+function rebuildSchedule() {
+  const ids = playerIds();
+  const N = ids.length;
+
+  if (N < 4) {
+    state.schedule = [];
+    state.results  = [];
+    return;
+  }
+
+  // We need groups of 4 (2v2). Each player plays exactly twice.
+  // Total player-slots needed = N * 2. Each match uses 4 slots. Rounds = N*2/4 = N/2.
+  // If N is odd: add a virtual BYE player so N becomes even, then assign bye slots.
+  const isOdd = N % 2 !== 0;
+  const effective = isOdd ? N + 1 : N;   // effective even count
+  const numRounds = effective / 2;        // each player appears in exactly 2 rounds
+
+  // Build schedule using the "round robin circle" algorithm
+  // Fix the last element, rotate the rest
+  const pool = [...ids];
+  if (isOdd) pool.push('BYE'); // sentinel
+  const n = pool.length;       // even
+
+  const rounds = [];
+  const fixed = pool[n - 1];
+  const rotating = pool.slice(0, n - 1);
+
+  for (let r = 0; r < numRounds; r++) {
+    const round = [fixed, ...rotating];  // n players this round
+    // Split into groups of 4 (since n = effective, n/2 groups of 2 per half)
+    // Actually we want groups of 4 for 2v2 matches
+    const groups = [];
+    for (let i = 0; i < round.length; i += 4) {
+      groups.push(round.slice(i, i + 4));
+    }
+    rounds.push(groups);
+    // rotate: move last of rotating to front
+    rotating.unshift(rotating.pop());
+  }
+
+  // Flatten rounds into schedule entries
+  const schedule = [];
+  rounds.forEach(groups => {
+    groups.forEach(group => {
+      if (group.includes('BYE')) {
+        // The non-BYE players in this group get a bye this round
+        const byePlayers = group.filter(x => x !== 'BYE');
+        schedule.push({ type: 'bye', players: byePlayers });
+      } else if (group.length === 4) {
+        schedule.push({ type: 'match', players: group });
+      }
+    });
+  });
+
+  state.schedule = schedule;
+
+  // Trim or extend results array to match new schedule length
+  const oldResults = state.results || [];
+  state.results = schedule.map((_, i) => oldResults[i] || null);
+}
+
+// Verify: every real player appears exactly twice across schedule
+function verifySchedule() {
+  const counts = {};
+  playerIds().forEach(id => { counts[id] = 0; });
+  state.schedule.forEach(slot => {
+    slot.players.forEach(id => { if (counts[id] !== undefined) counts[id]++; });
+  });
+  return counts; // each should be 2
+}
+
+// ─────────────────────────────────────────────────────────────────
+// STANDINGS
+// ─────────────────────────────────────────────────────────────────
+function computeStandings() {
+  const stats = {};
+  state.players.forEach(p => {
+    stats[p.id] = { pid: p.id, wins: 0, pieces: 0, played: 0, byes: 0, noshows: 0 };
+  });
+
+  state.schedule.forEach((slot, idx) => {
+    const r = state.results[idx];
+
+    if (slot.type === 'bye') {
+      slot.players.forEach(pid => { if (stats[pid]) stats[pid].byes++; });
+      return;
+    }
+
+    // match slot
+    if (!r || r.winner == null) return;
+
+    const noshows = r.noshows || [];
+    noshows.forEach(pid => { if (stats[pid]) stats[pid].noshows++; });
+
+    const winTeam  = r.winner === 1 ? r.team1 : r.team2;
+    const loseTeam = r.winner === 1 ? r.team2 : r.team1;
+    const pieces   = parseInt(r.pieces) || 0;
+
+    winTeam.forEach(pid => {
+      if (!stats[pid]) return;
+      stats[pid].wins++;
+      stats[pid].pieces += pieces;
+      stats[pid].played++;
+    });
+    loseTeam.forEach(pid => {
+      if (stats[pid]) stats[pid].played++;
+    });
+  });
+
+  return Object.values(stats).sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    return b.pieces - a.pieces;
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if (btn.dataset.tab === 'leaderboard') renderLeaderboard();
+    if (btn.dataset.tab === 'finale')      renderFinale();
+    if (btn.dataset.tab === 'schedule')    renderSchedule();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER: ROSTER
+// ─────────────────────────────────────────────────────────────────
+function renderRoster() {
+  const grid = document.getElementById('playerGrid');
+  const names = state.players.map(p => (p.name||'').trim().toLowerCase()).filter(n=>n!=='');
+  const dupSet = new Set(names.filter((n,i,a) => a.indexOf(n) !== i));
+
+  let h = '';
+  state.players.forEach((p, idx) => {
+    const nm = (p.name||'').trim().toLowerCase();
+    const isDup = nm !== '' && dupSet.has(nm);
+    h += `<div class="player-row-wrap" data-pid="${p.id}">
+      <div class="p-badge">${idx+1}</div>
+      <input type="text" class="player-input${isDup?' dup-input':''}" data-pid="${p.id}"
+        value="${esc(p.name||'')}" placeholder="Player ${idx+1} name" maxlength="28">
+      <span class="dup-tag${isDup?' show':''}">dup</span>
+      <button class="remove-player-btn" data-remove="${p.id}" title="Remove player">×</button>
+    </div>`;
+  });
+  grid.innerHTML = h;
+
+  // Dup warning banner
+  const warn = document.getElementById('dupWarning');
+  warn.style.display = hasDuplicateNames() ? 'block' : 'none';
+
+  // Add player button cap
+  document.getElementById('addPlayerBtn').disabled = false;
+
+  // Events
+  grid.querySelectorAll('.player-input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const pid = +inp.dataset.pid;
+      const pl = state.players.find(p => p.id === pid);
+      if (pl) pl.name = inp.value;
+      saveState();
+      // Re-decorate dup highlights without full re-render (preserve focus)
+      decorateDups();
+    });
+  });
+
+  grid.querySelectorAll('.remove-player-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pid = +btn.dataset.remove;
+      if (state.players.length <= 4) { alert('Minimum 4 players required.'); return; }
+      if (!confirm(`Remove ${pname(pid)} from the tournament? This will clear all saved results.`)) return;
+      state.players = state.players.filter(p => p.id !== pid);
+      state.results = [];
+      rebuildSchedule();
+      saveState();
+      renderRoster();
+      renderSchedule();
+      updateHeader();
+    });
+  });
+
+  updateHeader();
+}
+
+function decorateDups() {
+  const names = state.players.map(p => (p.name||'').trim().toLowerCase()).filter(n=>n!=='');
+  const dupSet = new Set(names.filter((n,i,a) => a.indexOf(n) !== i));
+  document.querySelectorAll('.player-input[data-pid]').forEach(inp => {
+    const nm = inp.value.trim().toLowerCase();
+    const isDup = nm !== '' && dupSet.has(nm);
+    inp.classList.toggle('dup-input', isDup);
+    const tag = inp.parentElement.querySelector('.dup-tag');
+    if (tag) tag.classList.toggle('show', isDup);
+  });
+  document.getElementById('dupWarning').style.display = hasDuplicateNames() ? 'block' : 'none';
+}
+
+document.getElementById('addPlayerBtn').addEventListener('click', () => {
+  const newId = state.nextId++;
+  state.players.push({ id: newId, name: '' });
+  // Odd player count: schedule stays valid (bye inserted automatically)
+  state.results = [];
+  rebuildSchedule();
+  saveState();
+  renderRoster();
+  renderSchedule();
+  updateHeader();
+  // Focus the new input
+  const inputs = document.querySelectorAll('#playerGrid .player-input');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+});
+
+// Mumbai
+function initMumbai() {
+  const inp = document.getElementById('mumbaiInput');
+  inp.value = state.mumbai || '';
+  inp.addEventListener('input', () => { state.mumbai = inp.value; saveState(); });
+}
+
+function updateHeader() {
+  const N = state.players.length;
+  const rounds = state.schedule.filter(s => s.type === 'match').length;
+  document.getElementById('headerEyebrow').textContent = `2v2 Doubles · ${N} Players · ${rounds} Match${rounds!==1?'es':''}`;
+  document.getElementById('footNote').textContent = `Pune Office Carrom Blitz · ${N} players · Top scorer faces Mumbai`;
+
+  // Update card title
+  const ct = document.querySelector('#tab-roster .card-title');
+  if (ct) ct.childNodes[0].textContent = `Pune Players (${N})`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER: SCHEDULE
+// ─────────────────────────────────────────────────────────────────
+function renderSchedule() {
+  const container = document.getElementById('scheduleContainer');
+  const N = state.players.length;
+
+  if (N < 4) {
+    container.innerHTML = `<div class="info-note">Add at least <strong>4 players</strong> to generate a schedule.</div>`;
+    return;
+  }
+
+  // Show schedule integrity info
+  const counts = verifySchedule();
+  const maxPlays = Math.max(...Object.values(counts));
+  const minPlays = Math.min(...Object.values(counts));
+  const integrityOk = maxPlays <= 2 && minPlays >= (N <= 4 ? 1 : 2) - (N % 2 !== 0 ? 1 : 0);
+
+  let h = '';
+
+  state.schedule.forEach((slot, idx) => {
+    const r = state.results[idx];
+    const dayLabel = DAY_LABELS[idx % DAY_LABELS.length];
+
+    if (slot.type === 'bye') {
+      const byeNames = slot.players.map(id => `<b>${esc(pname(id))}</b>`).join(' & ');
+      h += `<div class="day-card bye-card" id="daycard-${idx}">
+        <div class="day-header">
+          <div class="day-num">${idx+1}</div>
+          <div>
+            <div class="day-name">Day ${idx+1} — ${dayLabel}</div>
+            <div class="day-players">BYE round</div>
+          </div>
+          <div class="day-status bye">BYE</div>
+        </div>
+        <div class="bye-info">
+          🪑 ${byeNames} sit out this round — odd number of players. They still play their full 2 matches in other rounds.
+        </div>
+      </div>`;
+      return;
+    }
+
+    // match slot
+    const isDone    = r && r.winner != null;
+    const isNoshow  = r && r.type === 'noshow';
+    const playerList = slot.players.map(id =>
+      `<span style="color:var(--electric);font-weight:700;">${esc(pname(id))}</span>`
+    ).join(' · ');
+
+    let statusClass = 'pending', statusText = 'Pending';
+    if (isNoshow)  { statusClass = 'noshow'; statusText = 'No-Show'; }
+    else if (isDone){ statusClass = 'done';   statusText = '✓ Done'; }
+
+    h += `<div class="day-card${isNoshow?' noshow-card':''}" id="daycard-${idx}">
+      <div class="day-header">
+        <div class="day-num">${idx+1}</div>
+        <div>
+          <div class="day-name">Day ${idx+1} — ${dayLabel}</div>
+          <div class="day-players">${playerList}</div>
+        </div>
+        <div class="day-status ${statusClass}">${statusText}</div>
+      </div>
+      ${isDone && !isNoshow ? renderResultDisplay(idx)
+        : isNoshow          ? renderNoshowDisplay(idx)
+        : renderMatchForm(idx)}
+    </div>`;
+  });
+
+  container.innerHTML = h;
+  attachScheduleEvents();
+}
+
+function renderMatchForm(idx) {
+  const slot = state.schedule[idx];
+  const r    = state.results[idx] || {};
+  const ps   = slot.players;
+
+  function opts(selected, exclude) {
+    return ps
+      .filter(id => id !== exclude)
+      .map(id => `<option value="${id}" ${selected==id?'selected':''}>${esc(pname(id))}</option>`)
+      .join('');
+  }
+
+  const t1p1 = r.team1 ? r.team1[0] : ps[0];
+  const t1p2 = r.team1 ? r.team1[1] : ps[1];
+  const t2p1 = r.team2 ? r.team2[0] : ps[2];
+  const t2p2 = r.team2 ? r.team2[1] : ps[3];
+  const noshows = r.noshows || [];
+
+  // No-show checkboxes
+  const noshowChecks = ps.map(id =>
+    `<label class="noshow-check-wrap">
+      <input type="checkbox" class="noshow-check" data-day="${idx}" data-pid="${id}" ${noshows.includes(id)?'checked':''}>
+      <span class="noshow-check-label">${esc(pname(id))}</span>
+    </label>`
+  ).join('');
+
+  return `<div class="match-form" data-day="${idx}">
+    <div>
+      <div class="form-section-label">🚫 No-shows (absent players)</div>
+      <div class="noshow-row" style="margin-bottom:4px;">${noshowChecks}</div>
+      <div style="font-size:11px;color:#7e8cc4;">Check any player who didn't show up. If 2+ players are absent the match cannot proceed.</div>
+    </div>
+    <div>
+      <div class="form-section-label">🎯 After coin flip — assign teams</div>
+      <div class="teams-row">
+        <div class="team-box" id="teambox1-${idx}">
+          <div class="team-label">Team 1</div>
+          <div class="team-players-sel">
+            <select class="player-sel" data-day="${idx}" data-team="1" data-pos="0">${opts(t1p1, null)}</select>
+            <select class="player-sel" data-day="${idx}" data-team="1" data-pos="1">${opts(t1p2, null)}</select>
+          </div>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="team-box" id="teambox2-${idx}">
+          <div class="team-label">Team 2</div>
+          <div class="team-players-sel">
+            <select class="player-sel" data-day="${idx}" data-team="2" data-pos="0">${opts(t2p1, null)}</select>
+            <select class="player-sel" data-day="${idx}" data-team="2" data-pos="1">${opts(t2p2, null)}</select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Winner:</span>
+      <select class="winner-sel" data-day="${idx}">
+        <option value="">— select —</option>
+        <option value="1" ${r.winner===1?'selected':''}>Team 1</option>
+        <option value="2" ${r.winner===2?'selected':''}>Team 2</option>
+      </select>
+      <span class="result-label">Pieces left:</span>
+      <input type="number" class="pieces-input" data-day="${idx}" min="0" max="29" value="${r.pieces||''}" placeholder="0">
+    </div>
+    <button class="save-btn" data-day="${idx}">Save Result</button>
+  </div>`;
+}
+
+function renderResultDisplay(idx) {
+  const r = state.results[idx];
+  const winTeam   = r.winner === 1 ? r.team1 : r.team2;
+  const loseTeam  = r.winner === 1 ? r.team2 : r.team1;
+  const winNames  = winTeam.map(id => esc(pname(id))).join(' & ');
+  const loseNames = loseTeam.map(id => esc(pname(id))).join(' & ');
+  const pieces    = r.pieces ? `· ${r.pieces} pieces left` : '';
+  const noshows   = (r.noshows||[]).map(id => esc(pname(id))).join(', ');
+
+  return `<div class="result-display">
+    <div class="result-teams">
+      <div class="result-winner">🏆 ${winNames} won</div>
+      <div class="result-detail">vs ${loseNames} ${pieces}</div>
+      ${noshows ? `<div style="font-size:12px;color:var(--red);margin-top:4px;">⚠️ No-show: ${noshows}</div>` : ''}
+    </div>
+    <button class="edit-result-btn" data-edit="${idx}">Edit</button>
+  </div>`;
+}
+
+function renderNoshowDisplay(idx) {
+  const r = state.results[idx];
+  const absent = (r.noshows||[]).map(id => esc(pname(id))).join(', ');
+  return `<div class="noshow-info">
+    <b>Match cancelled — too many no-shows.</b><br>
+    Absent: ${absent || 'unknown'}. No points awarded. Players still count this as their scheduled slot.
+    <br><button class="edit-result-btn" data-edit="${idx}" style="margin-top:8px;display:inline-block;">Edit</button>
+  </div>`;
+}
+
+function attachScheduleEvents() {
+  // Save result
+  document.querySelectorAll('.save-btn[data-day]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.day;
+      const slot = state.schedule[idx];
+      const ps   = slot.players;
+
+      // Gather no-shows
+      const noshowChecks = document.querySelectorAll(`.noshow-check[data-day="${idx}"]:checked`);
+      const noshows = Array.from(noshowChecks).map(c => +c.dataset.pid);
+
+      // If 2 or more no-shows: too few players for a 2v2 → mark as cancelled
+      if (noshows.length >= 2) {
+        if (!confirm(`${noshows.length} players absent — not enough for a 2v2. Mark this match as cancelled?`)) return;
+        state.results[idx] = { type: 'noshow', noshows };
+        saveState();
+        renderSchedule();
+        return;
+      }
+
+      const getVal = (team, pos) => {
+        const sel = document.querySelector(`.player-sel[data-day="${idx}"][data-team="${team}"][data-pos="${pos}"]`);
+        return sel ? +sel.value : ps[(team-1)*2+pos];
+      };
+
+      const t1 = [getVal(1,0), getVal(1,1)];
+      const t2 = [getVal(2,0), getVal(2,1)];
+      const all4 = [...t1, ...t2];
+
+      // Validate: no duplicate across teams
+      if (new Set(all4).size < 4) {
+        alert('Same player selected more than once. Each slot must have a different player.');
+        return;
+      }
+      // Validate: all selected are from today's players
+      for (const p of all4) {
+        if (!ps.includes(p)) { alert('Select only today\'s scheduled players.'); return; }
+      }
+      // Validate: no-show player shouldn't be in a team
+      for (const p of noshows) {
+        if (all4.includes(p)) { alert(`${pname(p)} is marked as no-show but also selected in a team. Please fix.`); return; }
+      }
+
+      const winnerSel = document.querySelector(`.winner-sel[data-day="${idx}"]`);
+      const piecesInp = document.querySelector(`.pieces-input[data-day="${idx}"]`);
+      const winner    = winnerSel && winnerSel.value ? +winnerSel.value : null;
+      if (!winner) { alert('Please select the winning team.'); return; }
+
+      state.results[idx] = { type:'match', team1:t1, team2:t2, winner, pieces: piecesInp ? piecesInp.value : '', noshows };
+      saveState();
+      renderSchedule();
+    });
+  });
+
+  // Edit
+  document.querySelectorAll('.edit-result-btn[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = +btn.dataset.edit;
+      const r = state.results[idx];
+      if (r) {
+        // Preserve teams/noshows in state for pre-fill but clear winner to show form
+        state.results[idx] = { ...r, winner: null };
+      }
+      renderSchedule();
+    });
+  });
+
+  // Live winner highlight
+  document.querySelectorAll('.winner-sel[data-day]').forEach(sel => {
+    sel.addEventListener('change', () => highlightTeam(+sel.dataset.day, +sel.value));
+    if (sel.value) highlightTeam(+sel.dataset.day, +sel.value);
+  });
+}
+
+function highlightTeam(idx, winner) {
+  const b1 = document.getElementById(`teambox1-${idx}`);
+  const b2 = document.getElementById(`teambox2-${idx}`);
+  if (!b1||!b2) return;
+  b1.classList.toggle('winner-team', winner===1);
+  b2.classList.toggle('winner-team', winner===2);
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER: LEADERBOARD
+// ─────────────────────────────────────────────────────────────────
+function renderLeaderboard() {
+  const standings = computeStandings();
+  const content   = document.getElementById('leaderboardContent');
+  const anyResult = state.results.some(r => r && (r.winner != null || r.type === 'noshow'));
+  const counts    = verifySchedule();
+  const maxExp    = 2;
+
+  let h = `<table class="lb-table">
+    <thead><tr>
+      <th>#</th>
+      <th style="text-align:left">Player</th>
+      <th>Pts</th>
+      <th>TB Pieces</th>
+      <th>Played / Expected</th>
+    </tr></thead><tbody>`;
+
+  standings.forEach((s, i) => {
+    const expected  = counts[s.pid] || 0;
+    const rowClass  = i === 0 ? 'rank-1' : '';
+    const isAbsent  = s.noshows > 0;
+    const ptsClass  = s.wins >= 2 ? 'pts-high' : s.wins === 1 ? 'pts-mid' : 'pts-low';
+    const overplayed = s.played > maxExp;
+
+    h += `<tr class="${rowClass}${isAbsent?' absent-row':''}">
+      <td><span class="rank-badge">${i+1}</span></td>
+      <td><div class="player-cell">
+        <span class="pid-tag${isAbsent?' absent-tag':''}">${esc(pname(s.pid))}</span>
+        ${i===0 && s.wins>0 ? '<span style="font-size:16px;">👑</span>' : ''}
+        ${s.byes > 0    ? `<span class="bye-pill">BYE×${s.byes}</span>` : ''}
+        ${s.noshows > 0 ? `<span class="noshow-pill">NO-SHOW×${s.noshows}</span>` : ''}
+      </div></td>
+      <td><span class="pts-badge ${ptsClass}">${s.wins}</span></td>
+      <td><span style="color:var(--gold);font-weight:700;">${s.pieces > 0 ? s.pieces : '–'}</span></td>
+      <td><span style="font-size:13px;color:${overplayed?'var(--red)':'#a9b8e8'};">${s.played} / ${expected}${overplayed?' ⚠️':''}</span></td>
+    </tr>`;
+  });
+
+  h += `</tbody></table>
+  <div style="margin-top:14px;font-size:12px;color:#7e8cc4;padding:0 4px;">
+    Sort: <strong style="color:var(--electric);">Points</strong> → <strong style="color:var(--gold);">Tiebreaker pieces</strong>
+    &nbsp;·&nbsp; BYE = sat out (odd players) &nbsp;·&nbsp; NO-SHOW = absent
+  </div>`;
+
+  if (!anyResult) {
+    h = `<div style="text-align:center;padding:30px;color:#a9b8e8;font-size:14px;">No results yet. Enter match results in the <strong style="color:var(--electric);">Schedule</strong> tab.</div>`;
+  }
+
+  content.innerHTML = h;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// RENDER: GRAND FINALE
+// ─────────────────────────────────────────────────────────────────
+function renderFinale() {
+  const standings  = computeStandings();
+  const topPune    = standings[0];
+  const anyResult  = state.results.some(r => r && r.winner != null);
+  const mumbaiName = (state.mumbai||'').trim() || 'Mumbai Champion';
+  const box        = document.getElementById('finaleBox');
+
+  const finalistHtml = !anyResult
+    ? `<div class="tbd-card">Pune finalist<br>TBD</div>`
+    : `<div class="finalist-card pop-in">
+        <div class="finalist-city pune">Pune 🏙️</div>
+        <div class="finalist-name">${esc(pname(topPune.pid))}</div>
+        <div class="finalist-pts">${topPune.wins} pt${topPune.wins!==1?'s':''} · ${topPune.pieces} pieces TB</div>
+      </div>`;
+
+  box.innerHTML = `
+    <div class="trophy-big">🏆</div>
+    <div class="finale-title">Grand Finale</div>
+    <div class="finale-sub">Top Pune scorer faces the Mumbai champion</div>
+    <div class="matchup">
+      ${finalistHtml}
+      <div class="vs-big">⚔️</div>
+      <div class="finalist-card">
+        <div class="finalist-city mumbai">Mumbai ✈️</div>
+        <div class="finalist-name">${esc(mumbaiName)}</div>
+        <div class="finalist-pts">Visiting challenger</div>
+      </div>
+    </div>
+    ${anyResult && topPune.wins > 0
+      ? `<div style="margin-top:22px;font-size:13px;color:var(--green);font-weight:700;">
+           ✅ Pune's representative is confirmed — pending remaining matches
+         </div>` : ''}`;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────────────────────────
+document.getElementById('btnReset').addEventListener('click', () => {
+  if (!confirm('Reset all match results? Player names and schedule will be kept.')) return;
+  state.results = state.schedule.map(() => null);
+  saveState();
+  renderSchedule();
+});
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+// ─────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────
+renderRoster();
+initMumbai();
+renderSchedule();
+updateHeader();
+</script>
+</body>
+</html>
